@@ -16,6 +16,9 @@ sources:
     sha256: "1c027a53457e87b0b3a475e5c8045b94400c475898c8bd51b0fbd218b99a7f7b"
 patches:
   "2.10.19":
+    - patch_file: "patches/0004-boost-drop-compiled-components.patch"
+      patch_type: "conan"
+      patch_description: "CMake: resolve boost components"
     - patch_file: "patches/0003-find-cmake-targets.patch"
       patch_type: "conan"
       patch_description: "CMake: internal targets"

@@ -1,0 +1,82 @@
+--- a/Release/cmake/cpprest_find_boost.cmake
++++ b/Release/cmake/cpprest_find_boost.cmake
+@@ -44,11 +44,11 @@ function(cpprest_find_boost)
+       set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android/build/out/x86/lib" CACHE INTERNAL "")
+       set(Boost_ARCHITECTURE "-x32" CACHE INTERNAL "")
+     endif()
+-    cpprestsdk_find_boost_android_package(Boost ${BOOST_VERSION} EXACT REQUIRED COMPONENTS random system thread filesystem chrono atomic)
++    cpprestsdk_find_boost_android_package(Boost ${BOOST_VERSION} EXACT REQUIRED COMPONENTS random thread filesystem chrono atomic)
+   elseif(UNIX)
+-    find_package(Boost REQUIRED COMPONENTS random system thread filesystem chrono atomic date_time regex)
++    find_package(Boost REQUIRED COMPONENTS random thread filesystem chrono atomic)
+   else()
+-    find_package(Boost REQUIRED COMPONENTS system date_time regex)
++    find_package(Boost REQUIRED)
+   endif()
+ 
+   add_library(cpprestsdk_boost_internal INTERFACE)
+@@ -78,7 +78,6 @@ function(cpprest_find_boost)
+       target_link_libraries(cpprestsdk_boost_internal INTERFACE
+         Boost::boost
+         Boost::random
+-        Boost::system
+         Boost::thread
+         Boost::filesystem
+         Boost::chrono
+@@ -88,20 +87,14 @@ function(cpprest_find_boost)
+       target_link_libraries(cpprestsdk_boost_internal INTERFACE
+         Boost::boost
+         Boost::random
+-        Boost::system
+         Boost::thread
+         Boost::filesystem
+         Boost::chrono
+         Boost::atomic
+-        Boost::date_time
+-        Boost::regex
+       )
+     else()
+       target_link_libraries(cpprestsdk_boost_internal INTERFACE
+         Boost::boost
+-        Boost::system
+-        Boost::date_time
+-        Boost::regex
+       )
+     endif()
+   endif()
+--- a/Release/tests/functional/json/parsing_tests.cpp
++++ b/Release/tests/functional/json/parsing_tests.cpp
+@@ -14,12 +14,8 @@
+ #include <array>
+ #include <iomanip>
+ 
+-#if defined(_WIN32) || defined(__APPLE__)
++#if !(defined(ANDROID) || defined(__ANDROID__))
+ #include <regex>
+-#elif (defined(ANDROID) || defined(__ANDROID__))
+-#else
+-// GCC 4.8 doesn't support regex very well, fall back to Boost. Revist in GCC 4.9.
+-#include <boost/regex.hpp>
+ #endif
+ 
+ using namespace web;
+@@ -172,16 +168,12 @@ namespace json_tests
+ {
+ inline bool verify_parsing_error_msg(const std::string& str)
+ {
+-#if defined(_WIN32) || defined(__APPLE__)
+-    auto spattern = "^\\* Line \\d+, Column \\d+ Syntax error: .+";
+-    static std::regex pattern(spattern);
+-    return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);
+-#elif (defined(ANDROID) || defined(__ANDROID__))
++#if defined(ANDROID) || defined(__ANDROID__)
+     return str.find("Syntax error: ") != std::string::npos;
+ #else
+     auto spattern = "^\\* Line \\d+, Column \\d+ Syntax error: .+";
+-    static boost::regex pattern(spattern);
+-    return boost::regex_match(str, pattern, boost::regex_constants::match_flag_type::match_not_null);
++    static std::regex pattern(spattern);
++    return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);
+ #endif
+ }
+ 
